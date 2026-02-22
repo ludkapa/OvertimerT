@@ -1,2 +1,2 @@
 pub(crate) mod days;
-pub mod generate_data;
+pub mod generate_params;

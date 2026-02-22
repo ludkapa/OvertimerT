@@ -3,12 +3,12 @@ pub enum WorkShift {
     IsDay,
 }
 
-pub struct GenerateData {
+pub struct GenerateParams {
     salary: u32,
     shift: Option<WorkShift>,
 }
 
-impl GenerateData {
+impl GenerateParams {
     pub fn new(salary: u32) -> Self {
         Self {
             salary: salary,
