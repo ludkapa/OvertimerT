@@ -56,3 +56,13 @@ pub(crate) async fn salary(bot: Bot, msg: Message) -> AResult<()> {
     }
     Ok(())
 }
+
+pub(crate) async fn night_work_ask(bot: Bot, msg: Message) -> AResult<()> {
+    todo!(
+        "Задать вопрос работает ли человек в ночную и откинуть inline кнопки - распарсить callback",
+    )
+}
+
+pub(crate) async fn is_today_night_shift(bot: Bot, msg: Message) -> AResult<()> {
+    todo!("Задать вопрос ночная смена ли сейчас и сгенерировать таблицу")
+}
