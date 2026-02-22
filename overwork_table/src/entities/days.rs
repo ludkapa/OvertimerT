@@ -40,8 +40,8 @@ impl DaysBuilder {
         }
     }
 
-    pub(crate) fn with_holidays(mut self, holidays: HashSet<NaiveDate>) -> Self {
-        self.holidays = holidays;
+    pub(crate) fn with_holidays(mut self, holidays: &HashSet<NaiveDate>) -> Self {
+        self.holidays = holidays.to_owned();
         self
     }
 
