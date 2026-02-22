@@ -2,6 +2,8 @@ use chrono::{Datelike, Local, NaiveDate, Weekday};
 use derive_more::{Deref, DerefMut, IntoIterator};
 use std::collections::HashSet;
 
+use crate::entities::generate_params::WorkShift;
+
 #[derive(Default, Debug, Clone, Copy)]
 pub(crate) enum DayType {
     #[default]
@@ -96,7 +98,55 @@ impl FromIterator<Day> for Days {
 }
 
 impl Days {
-    pub(crate) fn from_holidays(holidays: &HashSet<NaiveDate>) -> Self {
+    pub(crate) fn split_months(&self) -> impl Iterator<Item = &[Day]> {
+        self.chunk_by(|a, b| a.day.month() == b.day.month())
+    }
+}
+
+enum Shift {
+    Night,
+    Day,
+}
+
+pub(crate) struct DaysBuilder {
+    holidays: HashSet<NaiveDate>,
+    first_january_shift: Option<Shift>,
+}
+
+impl DaysBuilder {
+    pub(crate) fn new() -> Self {
+        Self {
+            holidays: HashSet::new(),
+            first_january_shift: None,
+        }
+    }
+
+    pub(crate) fn with_holidays(mut self, holidays: HashSet<NaiveDate>) -> Self {
+        self.holidays = holidays;
+        self
+    }
+
+    pub(crate) fn with_shift_type(mut self, work_shift: WorkShift) -> Self {
+        let (date, current_shift) = match work_shift {
+            WorkShift::IsNight(date) => (date, Shift::Night),
+            WorkShift::IsDay(date) => (date, Shift::Day),
+        };
+
+        let first_january = NaiveDate::from_ymd_opt(date.year(), 1, 1).unwrap();
+        let current_week = date.week(first_january.weekday());
+        let shifts_gone = current_week.first_day().ordinal() / 7;
+
+        let first_jan_shift = match (shifts_gone % 2, current_shift) {
+            (0, shift) => shift,
+            (_, Shift::Night) => Shift::Day,
+            (_, Shift::Day) => Shift::Night,
+        };
+
+        self.first_january_shift = Some(first_jan_shift);
+        self
+    }
+
+    pub(crate) fn build() -> Days {
         let current_year = match holidays.iter().next().cloned() {
             Some(v) => v.year(),
             None => Local::now().date_naive().year(),
@@ -116,9 +166,5 @@ impl Days {
             })
             .collect();
         days
-    }
-
-    pub(crate) fn split_months(&self) -> impl Iterator<Item = &[Day]> {
-        self.chunk_by(|a, b| a.day.month() == b.day.month())
     }
 }
