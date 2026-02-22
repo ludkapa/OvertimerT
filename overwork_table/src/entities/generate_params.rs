@@ -1,6 +1,8 @@
+use chrono::NaiveDate;
+
 pub enum WorkShift {
-    IsNight,
-    IsDay,
+    IsNight(NaiveDate),
+    IsDay(NaiveDate),
 }
 
 pub struct GenerateParams {
