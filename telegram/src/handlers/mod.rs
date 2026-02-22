@@ -41,6 +41,7 @@ pub(crate) async fn salary(bot: Bot, msg: Message) -> AResult<()> {
             match salary {
                 Some(s) => {
                     let table = get_filled_table(s).await?;
+                    bot.send_message(msg.chat.id, "Ваш табель готов!").await?;
                     bot.send_document(
                         msg.chat.id,
                         InputFile::memory(table)
