@@ -21,8 +21,8 @@ impl GenerateData {
         self
     }
 
-    pub fn salary(&self) -> &u32 {
-        &self.salary
+    pub fn salary(&self) -> u32 {
+        self.salary
     }
 
     pub fn shift(&self) -> &Option<WorkShift> {
