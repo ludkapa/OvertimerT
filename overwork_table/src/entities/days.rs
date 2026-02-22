@@ -21,11 +21,16 @@ pub(crate) enum Season {
 pub(crate) struct Day {
     day: NaiveDate,
     flag: DayType,
+    is_night: bool,
 }
 
 impl Day {
-    pub(crate) fn new(day: NaiveDate, flag: DayType) -> Self {
-        Self { day, flag }
+    pub(crate) fn new(day: NaiveDate, flag: DayType, is_night: bool) -> Self {
+        Self {
+            day,
+            flag,
+            is_night,
+        }
     }
 
     pub(crate) fn year(&self) -> i32 {
