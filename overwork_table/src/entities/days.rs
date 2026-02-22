@@ -45,7 +45,7 @@ impl DaysBuilder {
         self
     }
 
-    pub(crate) fn with_shift_type(mut self, work_shift: WorkShift) -> Self {
+    pub(crate) fn with_shift_type(mut self, work_shift: &WorkShift) -> Self {
         let (date, current_shift) = match work_shift {
             WorkShift::IsNight(date) => (date, Shift::Night),
             WorkShift::IsDay(date) => (date, Shift::Day),
