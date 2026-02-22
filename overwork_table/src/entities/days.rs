@@ -91,7 +91,7 @@ impl FromIterator<Day> for Days {
 }
 
 impl Days {
-    pub(crate) fn new_with_holidays(holidays: &HashSet<NaiveDate>) -> Self {
+    pub(crate) fn from_holidays(holidays: &HashSet<NaiveDate>) -> Self {
         let current_year = match holidays.iter().next().cloned() {
             Some(v) => v.year(),
             None => Local::now().date_naive().year(),
