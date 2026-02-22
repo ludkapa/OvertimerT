@@ -146,25 +146,48 @@ impl DaysBuilder {
         self
     }
 
-    pub(crate) fn build() -> Days {
-        let current_year = match holidays.iter().next().cloned() {
+    pub(crate) fn build(self) -> Days {
+        let current_year = match self.holidays.iter().next().cloned() {
             Some(v) => v.year(),
             None => Local::now().date_naive().year(),
         };
+
         let first_date = NaiveDate::from_ymd_opt(current_year as i32, 1, 1).unwrap();
+        let first_jan_weekday = first_date.weekday();
+
         let days: Days = first_date
             .iter_days()
             .take_while(|d| d.year() == current_year as i32)
             .map(|d| {
-                if d.weekday() == Weekday::Sun {
-                    Day::new(d, DayType::Weekend)
-                } else if d.weekday() == Weekday::Sat || holidays.contains(&d) {
-                    Day::new(d, DayType::Earn)
+                let is_night = match &self.first_january_shift {
+                    Some(first_jan_shift) => {
+                        let current_week = d.week(first_jan_weekday);
+                        let shifts_gone = current_week.first_day().ordinal0() / 7;
+
+                        match (shifts_gone % 2, first_jan_shift) {
+                            (0, Shift::Night) => true,
+                            (0, Shift::Day) => false,
+                            (_, Shift::Night) => false,
+                            (_, Shift::Day) => true,
+                        }
+                    }
+                    None => false,
+                };
+
+                let day_type = if d.weekday() == Weekday::Sun {
+                    DayType::Weekend
+                } else if d.weekday() == Weekday::Sat && is_night {
+                    DayType::Weekend
+                } else if d.weekday() == Weekday::Sat || self.holidays.contains(&d) {
+                    DayType::Earn
                 } else {
-                    Day::new(d, DayType::Usual)
-                }
+                    DayType::Usual
+                };
+
+                Day::new(d, day_type, is_night)
             })
             .collect();
+
         days
     }
 }
