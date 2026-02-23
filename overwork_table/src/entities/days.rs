@@ -22,9 +22,19 @@ impl Days {
     }
 }
 
+#[derive(Debug)]
 enum Shift {
     Night,
     Day,
+}
+
+impl Shift {
+    pub fn next(&self) -> Self {
+        match self {
+            Shift::Night => Shift::Day,
+            Shift::Day => Shift::Night,
+        }
+    }
 }
 
 pub(crate) struct DaysBuilder {
@@ -51,14 +61,23 @@ impl DaysBuilder {
             WorkShift::IsDay(date) => (date, Shift::Day),
         };
 
-        let first_january = NaiveDate::from_ymd_opt(date.year(), 1, 1).unwrap();
-        let current_week = date.week(first_january.weekday());
-        let shifts_gone = current_week.first_day().ordinal() / 7;
+        // 1. Берем 1 января текущего года
+        let first_date = NaiveDate::from_ymd_opt(date.year(), 1, 1).unwrap();
 
-        let first_jan_shift = match (shifts_gone % 2, current_shift) {
-            (0, shift) => shift,
-            (_, Shift::Night) => Shift::Day,
-            (_, Shift::Day) => Shift::Night,
+        // 2. Узнаем день недели 1 января (Понедельник = 0, Воскресенье = 6)
+        let jan1_weekday = first_date.weekday().num_days_from_monday();
+
+        // 3. Берем порядковый день в году для переданной даты (начиная с 0)
+        let day_of_year = date.ordinal0();
+
+        // 4. Считаем, сколько полных недель прошло.
+        // Прибавляя jan1_weekday, мы выравниваем деление точно по границам понедельников.
+        let weeks_passed = (day_of_year + jan1_weekday) / 7;
+
+        // 5. Определяем смену 1 января
+        let first_jan_shift = match weeks_passed % 2 {
+            0 => current_shift,        // Четное количество недель = смена совпадает
+            _ => current_shift.next(), // Нечетное = смена поменялась
         };
 
         self.first_january_shift = Some(first_jan_shift);
@@ -72,22 +91,23 @@ impl DaysBuilder {
         };
 
         let first_date = NaiveDate::from_ymd_opt(current_year as i32, 1, 1).unwrap();
-        let first_jan_weekday = first_date.weekday();
+
+        let mut is_night = match &self.first_january_shift {
+            Some(Shift::Night) => true,
+            Some(Shift::Day) => false,
+            None => false,
+        };
 
         let days: Days = first_date
             .iter_days()
             .take_while(|d| d.year() == current_year as i32)
             .map(|d| {
-                let is_night = match &self.first_january_shift {
-                    Some(first_jan_shift) => {
-                        let current_week = d.week(first_jan_weekday);
-                        let shifts_gone = current_week.first_day().ordinal0() / 7;
-
-                        match (shifts_gone % 2, first_jan_shift) {
-                            (0, Shift::Night) => true,
-                            (0, Shift::Day) => false,
-                            (_, Shift::Night) => false,
-                            (_, Shift::Day) => true,
+                is_night = match &self.first_january_shift {
+                    Some(_) => {
+                        if d.weekday() == Weekday::Mon {
+                            !is_night
+                        } else {
+                            is_night
                         }
                     }
                     None => false,
@@ -117,5 +137,47 @@ impl DaysBuilder {
             .collect();
 
         days
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_first_jan_shift() {
+        // Given
+        let holidays_mock: HashSet<NaiveDate> = HashSet::new();
+        let start_date = NaiveDate::from_ymd_opt(2026, 1, 1).unwrap();
+        let jan1_weekday = start_date.weekday().num_days_from_monday();
+
+        start_date
+            .iter_days()
+            .filter(|d| d.year() == 2026)
+            .for_each(|d| {
+                let day_of_year = d.ordinal0();
+                let weeks_passed = (day_of_year + jan1_weekday) / 7;
+
+                let current_shift = match weeks_passed % 2 {
+                    0 => WorkShift::IsDay(d),
+                    _ => WorkShift::IsNight(d),
+                };
+
+                // when
+                let days = DaysBuilder::new()
+                    .with_holidays(&holidays_mock)
+                    .with_shift_type(&current_shift)
+                    .build();
+
+                let current_earn_type = days.first().unwrap().earn_type();
+                let target_earn_type = DayType::Usual;
+
+                // Then
+                assert_eq!(
+                    current_earn_type, target_earn_type,
+                    "Ошибка на дате: {} (прошло недель: {})",
+                    d, weeks_passed
+                );
+            });
     }
 }

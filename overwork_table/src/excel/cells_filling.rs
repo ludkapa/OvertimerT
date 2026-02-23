@@ -54,15 +54,10 @@ pub(super) fn add_header_cells(month_worksheet: &mut Worksheet, first_day: &Day)
     // Day header
     month_worksheet.write_with_format(ROW_DAYS_HEADER, COL_DATE, "Число/День", &format)?;
     // Bonus header
-    month_worksheet.write_with_format(
-        ROW_DAYS_HEADER,
-        COL_OVERWORKED_COUNTER,
-        "Доплата",
-        &format,
-    )?;
+    month_worksheet.write_with_format(ROW_DAYS_HEADER, COL_BONUS, "Доплата", &format)?;
     format = cell_style(DataType::UsualText, CellType::InputHeader);
     // Hours header
-    month_worksheet.write_with_format(ROW_DAYS_HEADER, COL_BONUS, "Часы", &format)?;
+    month_worksheet.write_with_format(ROW_DAYS_HEADER, COL_OVERWORKED_COUNTER, "Часы", &format)?;
     // Month
     format = match first_day.season() {
         Season::Winter => cell_style(DataType::UsualText, CellType::MonthWinter),

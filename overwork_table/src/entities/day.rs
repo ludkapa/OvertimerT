@@ -1,6 +1,6 @@
 use chrono::{Datelike, NaiveDate, Weekday};
 
-#[derive(Default, Debug, Clone, Copy)]
+#[derive(Default, Debug, Clone, Copy, PartialEq)]
 pub(crate) enum DayType {
     #[default]
     Usual,
