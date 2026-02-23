@@ -22,6 +22,7 @@ impl Days {
     }
 }
 
+#[derive(Debug)]
 enum Shift {
     Night,
     Day,
