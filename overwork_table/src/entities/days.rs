@@ -93,14 +93,23 @@ impl DaysBuilder {
                     None => false,
                 };
 
-                let day_type = if d.weekday() == Weekday::Sun {
-                    DayType::Weekend
-                } else if d.weekday() == Weekday::Sat && is_night {
-                    DayType::Weekend
-                } else if d.weekday() == Weekday::Sat || self.holidays.contains(&d) {
-                    DayType::Earn
-                } else {
-                    DayType::Usual
+                let is_holiday = self.holidays.contains(&d);
+
+                let day_type = match (d.weekday(), is_night, is_holiday) {
+                    // Sunday
+                    (Weekday::Sun, _, _) => DayType::Weekend,
+
+                    // Saturday
+                    (Weekday::Sat, true, _) => DayType::Weekend, // Night
+                    (Weekday::Sat, false, _) => DayType::Earn,   // Day
+
+                    // Holidays
+                    (_, true, true) => DayType::NightEarn,
+                    (_, false, true) => DayType::Earn,
+
+                    // Usual days
+                    (_, true, false) => DayType::Night,
+                    (_, false, false) => DayType::Usual,
                 };
 
                 Day::new(d, day_type)
