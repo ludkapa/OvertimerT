@@ -103,7 +103,7 @@ impl DaysBuilder {
                     DayType::Usual
                 };
 
-                Day::new(d, day_type, is_night)
+                Day::new(d, day_type)
             })
             .collect();
 
