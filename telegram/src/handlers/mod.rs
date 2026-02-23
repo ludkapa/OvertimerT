@@ -1,11 +1,9 @@
 use crate::{DState, UserDialogue};
 use anyhow::Result as AResult;
-use chrono::{Datelike, Local};
-use overwork_table::excel::get_filled_table;
 use teloxide::{
     Bot,
     prelude::*,
-    types::{InlineKeyboardButton, InlineKeyboardMarkup, InputFile, Message},
+    types::{InlineKeyboardButton, InlineKeyboardMarkup, Message},
 };
 
 pub(crate) async fn start(bot: Bot, dialogue: UserDialogue, msg: Message) -> AResult<()> {
