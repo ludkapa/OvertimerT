@@ -61,7 +61,7 @@ impl DaysBuilder {
             WorkShift::IsDay(date) => (date, Shift::Day),
         };
 
-        let day_of_year = date.ordinal0();
+        let day_of_year = date.ordinal();
         let shifts_gone = day_of_year / 7;
 
         let first_jan_shift = match (shifts_gone % 2, current_shift) {
