@@ -1,9 +1,14 @@
 use crate::{DState, UserDialogue};
 use anyhow::Result as AResult;
+use chrono::{Datelike, Local};
+use overwork_table::{
+    entities::generate_params::{GenerateParams, WorkShift},
+    excel::get_filled_table,
+};
 use teloxide::{
     Bot,
     prelude::*,
-    types::{InlineKeyboardButton, InlineKeyboardMarkup, Message},
+    types::{InlineKeyboardButton, InlineKeyboardMarkup, InputFile, Message},
 };
 
 pub(crate) async fn start(bot: Bot, dialogue: UserDialogue, msg: Message) -> AResult<()> {
@@ -75,15 +80,7 @@ fn make_confirm_keyboard() -> InlineKeyboardMarkup {
 //             let salary = text.parse::<u32>().ok();
 //             match salary {
 //                 Some(s) => {
-//                     let table = get_filled_table(s).await?;
-//                     bot.send_message(msg.chat.id, "Ваш табель готов!").await?;
-//                     bot.send_document(
-//                         msg.chat.id,
-//                         InputFile::memory(table)
-//                             .file_name(format!("tabel_{}.xlsx", Local::now().year())),
-//                     )
-//                     .await?;
-//                 }
+//                     //                 }
 //                 None => send_err_msg().await?,
 //             };
 //         }
@@ -94,10 +91,42 @@ fn make_confirm_keyboard() -> InlineKeyboardMarkup {
 
 pub(crate) async fn night_shift_toggle(
     bot: Bot,
+    salary: u32,
     dialogue: UserDialogue,
     query: CallbackQuery,
 ) -> AResult<()> {
-    todo!()
+    bot.answer_callback_query(query.id).await?;
+    if let Some(button_data) = query.data {
+        match button_data.as_str() {
+            "yes" => {
+                let keyboard = make_confirm_keyboard();
+                bot.send_message(dialogue.chat_id(), "На этой неделе дневная смена?")
+                    .reply_markup(keyboard)
+                    .await?;
+            }
+            "no" => {
+                let params = GenerateParams::new(salary);
+                send_table(bot, dialogue.chat_id(), params).await?;
+                dialogue.update(DState::Start).await?;
+            }
+            _ => {
+                bot.send_message(dialogue.chat_id(), "Неизвестная команда")
+                    .await?;
+            }
+        }
+    }
+    Ok(())
+}
+
+async fn send_table(bot: Bot, chat_id: ChatId, params: GenerateParams) -> AResult<()> {
+    let table = get_filled_table(params).await?;
+    bot.send_message(chat_id, "Ваш табель готов!").await?;
+    bot.send_document(
+        chat_id,
+        InputFile::memory(table).file_name(format!("tabel_{}.xlsx", Local::now().year())),
+    )
+    .await?;
+    Ok(())
 }
 
 pub(crate) async fn is_today_night_shift(bot: Bot, msg: Message) -> AResult<()> {
