@@ -19,6 +19,8 @@ enum DState {
     #[default]
     Start,
     Salary,
+    NightShiftToggle,
+    NightShiftType,
 }
 
 #[tokio::main]
