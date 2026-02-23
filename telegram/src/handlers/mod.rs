@@ -29,30 +29,32 @@ pub(crate) async fn start(bot: Bot, dialogue: UserDialogue, msg: Message) -> ARe
     Ok(())
 }
 
-pub(crate) async fn salary(bot: Bot, msg: Message) -> AResult<()> {
-    let send_err_msg = async || -> AResult<()> {
-        bot.send_message(msg.chat.id, "Некоректно указан оклад! Пример: 30456")
-            .await?;
-        Ok(())
-    };
-    match msg.text() {
-        Some(text) => {
-            let salary = text.parse::<u32>().ok();
-            match salary {
-                Some(s) => {
-                    let table = get_filled_table(s).await?;
-                    bot.send_message(msg.chat.id, "Ваш табель готов!").await?;
-                    bot.send_document(
-                        msg.chat.id,
-                        InputFile::memory(table)
-                            .file_name(format!("tabel_{}.xlsx", Local::now().year())),
-                    )
-                    .await?;
-                }
-                None => send_err_msg().await?,
-            };
+pub(crate) async fn salary(bot: Bot, dialogue: UserDialogue, msg: Message) -> AResult<()> {
+    let err_msg = "Некоректно указан оклад! Пример: 30456!";
+
+    let raw_salary = match msg.text() {
+        Some(text) => text,
+        None => {
+            bot.send_message(msg.chat.id, err_msg).await?;
+            return Ok(());
         }
-        None => send_err_msg().await?,
+    };
+
+    let salary = raw_salary.parse::<u32>().ok();
+
+    match salary {
+        Some(s) => {
+            let keyboard = make_confirm_keyboard();
+            bot.send_message(msg.chat.id, "Работаете ли вы в ночные смены?")
+                .reply_markup(keyboard)
+                .await?;
+            dialogue
+                .update(DState::NightShiftToggle { salary: s })
+                .await?;
+        }
+        None => {
+            bot.send_message(msg.chat.id, err_msg).await?;
+        }
     }
     Ok(())
 }
