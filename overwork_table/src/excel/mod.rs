@@ -16,7 +16,16 @@ pub async fn get_filled_table(gen_params: GenerateParams) -> AResult<Vec<u8>> {
     // Fetch holidays
     let holidays = HolidayDates::init().await?;
     // Generate days for filling
-    let days = Days::new_with_holidays(holidays.get_holidays());
+    let days = match gen_params.shift() {
+        Some(shift) => DaysBuilder::new()
+            .with_holidays(holidays.get_holidays())
+            .with_shift_type(shift)
+            .build(),
+        None => DaysBuilder::new()
+            .with_holidays(holidays.get_holidays())
+            .build(),
+    };
+
     // Split days to chunks by month
     let chunks = days.split_months();
 
