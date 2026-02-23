@@ -27,6 +27,11 @@ pub(crate) fn cell_style(data_type: DataType, cell_type: CellType) -> Format {
     let mut format = match cell_type {
         CellType::Usual => Format::new().set_border(FormatBorder::Dotted).set_bold(),
 
+        CellType::Night => Format::new()
+            .set_border(FormatBorder::Dotted)
+            .set_bold()
+            .set_background_color(BG_NIGHT),
+
         CellType::Weekend => Format::new()
             .set_border(FormatBorder::Dotted)
             .set_bold()
@@ -36,6 +41,11 @@ pub(crate) fn cell_style(data_type: DataType, cell_type: CellType) -> Format {
             .set_border(FormatBorder::Dotted)
             .set_bold()
             .set_background_color(Color::RGB(BG_EARN)),
+
+        CellType::NightEarn => Format::new()
+            .set_border(FormatBorder::Dotted)
+            .set_bold()
+            .set_background_color(Color::RGB(BG_NIGHT_EARN)),
 
         CellType::Header => Format::new()
             .set_border(FormatBorder::Medium)
