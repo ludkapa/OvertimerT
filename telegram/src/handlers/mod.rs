@@ -59,6 +59,41 @@ pub(crate) async fn salary(bot: Bot, dialogue: UserDialogue, msg: Message) -> AR
     Ok(())
 }
 
+fn make_confirm_keyboard() -> InlineKeyboardMarkup {
+    let btn_yes = InlineKeyboardButton::callback("Да", "yes");
+    let btn_no = InlineKeyboardButton::callback("Нет", "no");
+
+    InlineKeyboardMarkup::new(vec![vec![btn_yes], vec![btn_no]])
+}
+
+// pub(crate) async fn salary(bot: Bot, msg: Message) -> AResult<()> {
+//     let send_err_msg = async || -> AResult<()> {
+//         bot.send_message(msg.chat.id, "")
+//             .await?;
+//         Ok(())
+//     };
+//     match msg.text() {
+//         Some(text) => {
+//             let salary = text.parse::<u32>().ok();
+//             match salary {
+//                 Some(s) => {
+//                     let table = get_filled_table(s).await?;
+//                     bot.send_message(msg.chat.id, "Ваш табель готов!").await?;
+//                     bot.send_document(
+//                         msg.chat.id,
+//                         InputFile::memory(table)
+//                             .file_name(format!("tabel_{}.xlsx", Local::now().year())),
+//                     )
+//                     .await?;
+//                 }
+//                 None => send_err_msg().await?,
+//             };
+//         }
+//         None => send_err_msg().await?,
+//     }
+//     Ok(())
+// }
+
 pub(crate) async fn night_work_ask(bot: Bot, msg: Message) -> AResult<()> {
     todo!(
         "Задать вопрос работает ли человек в ночную и откинуть inline кнопки - распарсить callback",
