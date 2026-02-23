@@ -9,7 +9,7 @@ use teloxide::{
     update_listeners::webhooks,
 };
 
-use crate::handlers::{salary, start};
+use crate::handlers::{night_shift_toggle, salary, start};
 
 type UserDialogue = Dialogue<DState, InMemStorage<DState>>;
 
@@ -56,11 +56,19 @@ async fn run_bot(token: String, port: String, webhook_url: String) {
     )
     .await
     .expect("Не удалось поднять Webhook!");
+
     // Dialogue update logic
-    let router = Update::filter_message()
+    let router = dptree::entry()
         .enter_dialogue::<Message, InMemStorage<DState>, DState>()
-        .branch(dptree::case![DState::Start].endpoint(start))
-        .branch(dptree::case![DState::Salary].endpoint(salary));
+        .branch(
+            Update::filter_message()
+                .branch(dptree::case![DState::Start].endpoint(start))
+                .branch(dptree::case![DState::Salary].endpoint(salary)),
+        )
+        .branch(Update::filter_callback_query().branch(
+            dptree::case![DState::NightShiftToggle { salary }].endpoint(night_shift_toggle),
+        ));
+
     // Dispatcher
     Dispatcher::builder(bot, router)
         .dependencies(dptree::deps![InMemStorage::<DState>::new()])
