@@ -3,5 +3,5 @@ members = ["overwork_table", "telegram"]
 resolver = "3"
 
 [workspace.dependencies]
-chrono = { version = "0.4.43", features = ["serde"] }
+chrono = { version = "0.4.44", features = ["serde"] }
 anyhow = "1.0.102"
