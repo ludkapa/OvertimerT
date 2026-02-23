@@ -4,7 +4,9 @@ use chrono::{Datelike, NaiveDate, Weekday};
 pub(crate) enum DayType {
     #[default]
     Usual,
+    Night,
     Earn,
+    NightEarn,
     Weekend,
 }
 
