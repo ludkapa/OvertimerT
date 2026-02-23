@@ -79,22 +79,23 @@ impl DaysBuilder {
         };
 
         let first_date = NaiveDate::from_ymd_opt(current_year as i32, 1, 1).unwrap();
-        let first_jan_weekday = first_date.weekday();
+
+        let mut is_night = match &self.first_january_shift {
+            Some(Shift::Night) => true,
+            Some(Shift::Day) => false,
+            None => false,
+        };
 
         let days: Days = first_date
             .iter_days()
             .take_while(|d| d.year() == current_year as i32)
             .map(|d| {
-                let is_night = match &self.first_january_shift {
-                    Some(first_jan_shift) => {
-                        let current_ordinal_day = d.ordinal0();
-                        let shifts_gone = current_ordinal_day / 7;
-
-                        match (shifts_gone % 2, first_jan_shift) {
-                            (0, Shift::Night) => true,
-                            (0, Shift::Day) => false,
-                            (_, Shift::Night) => false,
-                            (_, Shift::Day) => true,
+                is_night = match &self.first_january_shift {
+                    Some(_) => {
+                        if d.weekday() == Weekday::Mon {
+                            !is_night
+                        } else {
+                            is_night
                         }
                     }
                     None => false,
