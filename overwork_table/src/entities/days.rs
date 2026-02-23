@@ -27,6 +27,15 @@ enum Shift {
     Day,
 }
 
+impl Shift {
+    pub fn next(&self) -> Self {
+        match self {
+            Shift::Night => Shift::Day,
+            Shift::Day => Shift::Night,
+        }
+    }
+}
+
 pub(crate) struct DaysBuilder {
     holidays: HashSet<NaiveDate>,
     first_january_shift: Option<Shift>,
@@ -51,14 +60,12 @@ impl DaysBuilder {
             WorkShift::IsDay(date) => (date, Shift::Day),
         };
 
-        let first_january = NaiveDate::from_ymd_opt(date.year(), 1, 1).unwrap();
-        let current_week = date.week(first_january.weekday());
-        let shifts_gone = current_week.first_day().ordinal() / 7;
+        let day_of_year = date.ordinal0();
+        let shifts_gone = day_of_year / 7;
 
         let first_jan_shift = match (shifts_gone % 2, current_shift) {
             (0, shift) => shift,
-            (_, Shift::Night) => Shift::Day,
-            (_, Shift::Day) => Shift::Night,
+            (_, shift) => shift.next(),
         };
 
         self.first_january_shift = Some(first_jan_shift);
