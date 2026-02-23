@@ -59,7 +59,7 @@ async fn run_bot(token: String, port: String, webhook_url: String) {
 
     // Dialogue update logic
     let router = dptree::entry()
-        .enter_dialogue::<Message, InMemStorage<DState>, DState>()
+        .enter_dialogue::<Update, InMemStorage<DState>, DState>()
         .branch(
             Update::filter_message()
                 .branch(dptree::case![DState::Start].endpoint(start))
