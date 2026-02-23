@@ -69,26 +69,6 @@ fn make_confirm_keyboard() -> InlineKeyboardMarkup {
     InlineKeyboardMarkup::new(vec![vec![btn_yes], vec![btn_no]])
 }
 
-// pub(crate) async fn salary(bot: Bot, msg: Message) -> AResult<()> {
-//     let send_err_msg = async || -> AResult<()> {
-//         bot.send_message(msg.chat.id, "")
-//             .await?;
-//         Ok(())
-//     };
-//     match msg.text() {
-//         Some(text) => {
-//             let salary = text.parse::<u32>().ok();
-//             match salary {
-//                 Some(s) => {
-//                     //                 }
-//                 None => send_err_msg().await?,
-//             };
-//         }
-//         None => send_err_msg().await?,
-//     }
-//     Ok(())
-// }
-
 pub(crate) async fn night_shift_toggle(
     bot: Bot,
     salary: u32,
