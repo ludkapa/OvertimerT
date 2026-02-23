@@ -5,7 +5,7 @@ use teloxide::{
     dispatching::{HandlerExt, UpdateFilterExt, dialogue::InMemStorage},
     dptree,
     prelude::{Dialogue, Dispatcher, LoggingErrorHandler},
-    types::{Message, Update},
+    types::Update,
     update_listeners::webhooks,
 };
 
