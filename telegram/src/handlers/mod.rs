@@ -4,8 +4,8 @@ use chrono::{Datelike, Local};
 use overwork_table::excel::get_filled_table;
 use teloxide::{
     Bot,
-    prelude::Requester,
-    types::{InputFile, Message},
+    prelude::*,
+    types::{InlineKeyboardButton, InlineKeyboardMarkup, InputFile, Message},
 };
 
 pub(crate) async fn start(bot: Bot, dialogue: UserDialogue, msg: Message) -> AResult<()> {
