@@ -24,14 +24,18 @@ pub async fn get_filled_table(gen_params: GenerateParams) -> AResult<Vec<u8>> {
     let mut table = Workbook::new();
 
     for month_days in chunks {
-        build_month_sheet(&mut table, month_days, salary)?;
+        build_month_sheet(&mut table, month_days, &gen_params)?;
     }
     // Convert struct to bytes and return it
     let buf = table.save_to_buffer()?;
     Ok(buf)
 }
 
-fn build_month_sheet(table: &mut Workbook, month_days: &[Day], salary: u32) -> AResult<()> {
+fn build_month_sheet(
+    table: &mut Workbook,
+    month_days: &[Day],
+    gen_params: &GenerateParams,
+) -> AResult<()> {
     // Creating Sheet
     let month_worksheet = table.add_worksheet();
     // Set month name
@@ -65,7 +69,7 @@ fn build_month_sheet(table: &mut Workbook, month_days: &[Day], salary: u32) -> A
     add_weekend_hours(month_worksheet, weekends_formula)?;
     add_overworked_hours(month_worksheet, usual_days_formula)?;
     add_total_payment(month_worksheet, month_days.len() as u8)?;
-    add_salary(month_worksheet, salary)?;
+    add_salary(month_worksheet, gen_params.salary())?;
 
     // Final styles
     polish_worksheet(month_worksheet)?;
