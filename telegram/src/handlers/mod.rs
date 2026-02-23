@@ -1,5 +1,5 @@
 use crate::{DState, UserDialogue};
-use anyhow::Result as AResult;
+use anyhow::{Ok, Result as AResult};
 use chrono::{Datelike, Local};
 use overwork_table::{
     entities::generate_params::{GenerateParams, WorkShift},
@@ -62,13 +62,6 @@ pub(crate) async fn salary(bot: Bot, dialogue: UserDialogue, msg: Message) -> AR
     Ok(())
 }
 
-fn make_confirm_keyboard() -> InlineKeyboardMarkup {
-    let btn_yes = InlineKeyboardButton::callback("Да", "yes");
-    let btn_no = InlineKeyboardButton::callback("Нет", "no");
-
-    InlineKeyboardMarkup::new(vec![vec![btn_yes], vec![btn_no]])
-}
-
 pub(crate) async fn night_shift_toggle(
     bot: Bot,
     salary: u32,
@@ -98,6 +91,37 @@ pub(crate) async fn night_shift_toggle(
     Ok(())
 }
 
+pub(crate) async fn day_shift_setup(
+    bot: Bot,
+    salary: u32,
+    dialogue: UserDialogue,
+    query: CallbackQuery,
+) -> AResult<()> {
+    bot.answer_callback_query(query.id).await?;
+    if let Some(button_data) = query.data {
+        match button_data.as_str() {
+            "yes" => {
+                let current_time = Local::now().date_naive();
+                let params = GenerateParams::new(salary).with_shift(WorkShift::IsDay(current_time));
+                send_table(bot, dialogue.chat_id(), params).await?;
+                dialogue.update(DState::Start).await?;
+            }
+            "no" => {
+                let current_time = Local::now().date_naive();
+                let params =
+                    GenerateParams::new(salary).with_shift(WorkShift::IsNight(current_time));
+                send_table(bot, dialogue.chat_id(), params).await?;
+                dialogue.update(DState::Start).await?;
+            }
+            _ => {
+                bot.send_message(dialogue.chat_id(), "Неизвестная команда")
+                    .await?;
+            }
+        }
+    }
+    Ok(())
+}
+
 async fn send_table(bot: Bot, chat_id: ChatId, params: GenerateParams) -> AResult<()> {
     let table = get_filled_table(params).await?;
     bot.send_message(chat_id, "Ваш табель готов!").await?;
@@ -109,6 +133,9 @@ async fn send_table(bot: Bot, chat_id: ChatId, params: GenerateParams) -> AResul
     Ok(())
 }
 
-pub(crate) async fn is_today_night_shift(bot: Bot, msg: Message) -> AResult<()> {
-    todo!("Задать вопрос ночная смена ли сейчас и сгенерировать таблицу")
+fn make_confirm_keyboard() -> InlineKeyboardMarkup {
+    let btn_yes = InlineKeyboardButton::callback("Да", "yes");
+    let btn_no = InlineKeyboardButton::callback("Нет", "no");
+
+    InlineKeyboardMarkup::new(vec![vec![btn_yes], vec![btn_no]])
 }
