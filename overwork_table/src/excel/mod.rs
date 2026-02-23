@@ -1,6 +1,10 @@
 use crate::{
     adapter::holidays::HolidayDates,
-    entities::days::{Day, DayType, Days},
+    entities::{
+        day::{Day, DayType},
+        days::DaysBuilder,
+        generate_params::GenerateParams,
+    },
     excel::{
         cells_constants::{COL_BONUS, COL_OVERWORKED_COUNTER, COL_TOTAL_HOURS, ROW_DAY_OFFSET},
         cells_filling::{
