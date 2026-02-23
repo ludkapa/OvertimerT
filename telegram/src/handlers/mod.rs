@@ -92,10 +92,12 @@ fn make_confirm_keyboard() -> InlineKeyboardMarkup {
 //     Ok(())
 // }
 
-pub(crate) async fn night_work_ask(bot: Bot, msg: Message) -> AResult<()> {
-    todo!(
-        "Задать вопрос работает ли человек в ночную и откинуть inline кнопки - распарсить callback",
-    )
+pub(crate) async fn night_shift_toggle(
+    bot: Bot,
+    dialogue: UserDialogue,
+    query: CallbackQuery,
+) -> AResult<()> {
+    todo!()
 }
 
 pub(crate) async fn is_today_night_shift(bot: Bot, msg: Message) -> AResult<()> {
