@@ -128,3 +128,24 @@ impl DaysBuilder {
         days
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_first_jan_shift() {
+        // Given
+        let holidays_mock: HashSet<NaiveDate> = HashSet::new();
+        let test_date = NaiveDate::from_ymd_opt(2026, 2, 25).unwrap();
+        // when
+        let days = DaysBuilder::new()
+            .with_holidays(&holidays_mock)
+            .with_shift_type(&WorkShift::IsDay(test_date))
+            .build();
+        let current_earn_type = days.first().unwrap().earn_type();
+        let target_earn_type = DayType::Usual;
+        // Then
+        assert_eq!(current_earn_type, target_earn_type);
+    }
+}
