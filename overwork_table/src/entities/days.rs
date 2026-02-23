@@ -87,8 +87,8 @@ impl DaysBuilder {
             .map(|d| {
                 let is_night = match &self.first_january_shift {
                     Some(first_jan_shift) => {
-                        let current_week = d.week(first_jan_weekday);
-                        let shifts_gone = current_week.first_day().ordinal0() / 7;
+                        let current_ordinal_day = d.ordinal0();
+                        let shifts_gone = current_ordinal_day / 7;
 
                         match (shifts_gone % 2, first_jan_shift) {
                             (0, Shift::Night) => true,
