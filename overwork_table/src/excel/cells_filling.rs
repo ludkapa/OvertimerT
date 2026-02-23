@@ -1,6 +1,6 @@
 use crate::excel::cells_constants::*;
 use crate::{
-    entities::days::{Day, DayType, Season},
+    entities::day::{Day, DayType, Season},
     excel::styles::{CellType, DataType, cell_style},
 };
 use anyhow::Result as AResult;
