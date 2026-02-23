@@ -110,7 +110,10 @@ fn build_day(
     match flag {
         DayType::Usual => {
             usual_day_cells.push(format!("B{}", row_number));
-            *work_hours = *work_hours + 8;
+            *work_hours += 8;
+        }
+        DayType::Night => {
+            *work_hours += 8;
         }
         _ => {
             weekend_cells.push(format!("B{}", row_number));
