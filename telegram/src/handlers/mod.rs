@@ -28,6 +28,8 @@ pub(crate) async fn start(bot: Bot, dialogue: UserDialogue, msg: Message) -> ARe
         ),
     )
     .await?;
+    bot.send_message(msg.chat.id, format!("Пришлите ваш оклад в формате: 30456."))
+        .await?;
     dialogue.update(DState::Salary).await?;
     Ok(())
 }
