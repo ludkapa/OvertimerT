@@ -1,6 +1,10 @@
 use crate::{
     adapter::holidays::HolidayDates,
-    entities::days::{Day, DayType, Days},
+    entities::{
+        day::{Day, DayType},
+        days::DaysBuilder,
+        generate_params::GenerateParams,
+    },
     excel::{
         cells_constants::{COL_BONUS, COL_OVERWORKED_COUNTER, COL_TOTAL_HOURS, ROW_DAY_OFFSET},
         cells_filling::{
@@ -12,11 +16,20 @@ use crate::{
 use anyhow::Result as AResult;
 use rust_xlsxwriter::{workbook::Workbook, worksheet::Worksheet};
 
-pub async fn get_filled_table(salary: u32) -> AResult<Vec<u8>> {
+pub async fn get_filled_table(gen_params: GenerateParams) -> AResult<Vec<u8>> {
     // Fetch holidays
     let holidays = HolidayDates::init().await?;
     // Generate days for filling
-    let days = Days::new_with_holidays(holidays.get_holidays());
+    let days = match gen_params.shift() {
+        Some(shift) => DaysBuilder::new()
+            .with_holidays(holidays.get_holidays())
+            .with_shift_type(shift)
+            .build(),
+        None => DaysBuilder::new()
+            .with_holidays(holidays.get_holidays())
+            .build(),
+    };
+
     // Split days to chunks by month
     let chunks = days.split_months();
 
@@ -24,14 +37,18 @@ pub async fn get_filled_table(salary: u32) -> AResult<Vec<u8>> {
     let mut table = Workbook::new();
 
     for month_days in chunks {
-        build_month_sheet(&mut table, month_days, salary)?;
+        build_month_sheet(&mut table, month_days, &gen_params)?;
     }
     // Convert struct to bytes and return it
     let buf = table.save_to_buffer()?;
     Ok(buf)
 }
 
-fn build_month_sheet(table: &mut Workbook, month_days: &[Day], salary: u32) -> AResult<()> {
+fn build_month_sheet(
+    table: &mut Workbook,
+    month_days: &[Day],
+    gen_params: &GenerateParams,
+) -> AResult<()> {
     // Creating Sheet
     let month_worksheet = table.add_worksheet();
     // Set month name
@@ -65,7 +82,7 @@ fn build_month_sheet(table: &mut Workbook, month_days: &[Day], salary: u32) -> A
     add_weekend_hours(month_worksheet, weekends_formula)?;
     add_overworked_hours(month_worksheet, usual_days_formula)?;
     add_total_payment(month_worksheet, month_days.len() as u8)?;
-    add_salary(month_worksheet, salary)?;
+    add_salary(month_worksheet, gen_params.salary())?;
 
     // Final styles
     polish_worksheet(month_worksheet)?;

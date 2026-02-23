@@ -1,6 +1,6 @@
 use crate::excel::cells_constants::*;
 use crate::{
-    entities::days::{Day, DayType, Season},
+    entities::day::{Day, DayType, Season},
     excel::styles::{CellType, DataType, cell_style},
 };
 use anyhow::Result as AResult;
@@ -11,8 +11,10 @@ pub(super) fn add_day_cell(month_worksheet: &mut Worksheet, day: &Day) -> AResul
     // Types for day marking
     let day_type_format = match day.earn_type() {
         DayType::Earn => cell_style(DataType::UsualText, CellType::Earn),
+        DayType::NightEarn => cell_style(DataType::UsualText, CellType::NightEarn),
         DayType::Weekend => cell_style(DataType::UsualText, CellType::Weekend),
         DayType::Usual => cell_style(DataType::UsualText, CellType::Usual),
+        DayType::Night => cell_style(DataType::UsualText, CellType::Night),
     };
     // Day/Weekday
     month_worksheet.write_with_format(

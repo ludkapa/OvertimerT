@@ -1,6 +1,8 @@
 // Colors
 pub(crate) const BG_WEEKEND: u32 = 0xF8B9B8;
+pub(crate) const BG_NIGHT: u32 = 0xA6A6A6;
 pub(crate) const BG_EARN: u32 = 0xB2E19E;
+pub(crate) const BG_NIGHT_EARN: u32 = 0x98B8A4;
 pub(crate) const BG_HEADER: u32 = 0xEDCAE9;
 pub(crate) const BG_TOTAL_PAYMENT: u32 = 0xB2E19E;
 pub(crate) const BG_INPUT_HEADER: u32 = 0xF0C2A7;

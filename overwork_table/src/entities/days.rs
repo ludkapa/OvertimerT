@@ -2,84 +2,10 @@ use chrono::{Datelike, Local, NaiveDate, Weekday};
 use derive_more::{Deref, DerefMut, IntoIterator};
 use std::collections::HashSet;
 
-#[derive(Default, Debug, Clone, Copy)]
-pub(crate) enum DayType {
-    #[default]
-    Usual,
-    Earn,
-    Weekend,
-}
-
-pub(crate) enum Season {
-    Winter,
-    Spring,
-    Summer,
-    Autumn,
-}
-
-#[derive(Default, Debug)]
-pub(crate) struct Day {
-    day: NaiveDate,
-    flag: DayType,
-}
-
-impl Day {
-    pub(crate) fn new(day: NaiveDate, flag: DayType) -> Self {
-        Self { day, flag }
-    }
-
-    pub(crate) fn year(&self) -> i32 {
-        self.day.year()
-    }
-
-    pub(crate) fn earn_type(&self) -> DayType {
-        self.flag
-    }
-
-    pub(crate) fn number(&self) -> u32 {
-        self.day.day()
-    }
-
-    pub(crate) fn weekday_short(&self) -> String {
-        match self.day.weekday() {
-            Weekday::Mon => "Пн".to_string(),
-            Weekday::Tue => "Вт".to_string(),
-            Weekday::Wed => "Ср".to_string(),
-            Weekday::Thu => "Чт".to_string(),
-            Weekday::Fri => "Пт".to_string(),
-            Weekday::Sat => "Сб".to_string(),
-            Weekday::Sun => "Вс".to_string(),
-        }
-    }
-
-    pub(crate) fn month_name(&self) -> String {
-        match self.day.month() {
-            1 => "❄️ Январь".to_string(),
-            2 => "🌨️ Февраль".to_string(),
-            3 => "🌱 Март".to_string(),
-            4 => "🌸 Апрель".to_string(),
-            5 => "🌿 Май".to_string(),
-            6 => "☀️ Июнь".to_string(),
-            7 => "🏖️ Июль".to_string(),
-            8 => "🍉 Август".to_string(),
-            9 => "🍂 Сентябрь".to_string(),
-            10 => "🍁 Октябрь".to_string(),
-            11 => "🌧️ Ноябрь".to_string(),
-            12 => "🎄 Декабрь".to_string(),
-            _ => "❓ Неизвестный месяц".to_string(),
-        }
-    }
-
-    pub(crate) fn season(&self) -> Season {
-        match self.day.month() {
-            1 | 2 | 12 => Season::Winter,
-            3 | 4 | 5 => Season::Spring,
-            6 | 7 | 8 => Season::Summer,
-            9 | 10 | 11 => Season::Autumn,
-            _ => Season::Winter,
-        }
-    }
-}
+use crate::entities::{
+    day::{Day, DayType},
+    generate_params::WorkShift,
+};
 
 #[derive(IntoIterator, Deref, DerefMut)]
 pub(crate) struct Days(Vec<Day>);
@@ -91,29 +17,105 @@ impl FromIterator<Day> for Days {
 }
 
 impl Days {
-    pub(crate) fn new_with_holidays(holidays: &HashSet<NaiveDate>) -> Self {
-        let current_year = match holidays.iter().next().cloned() {
+    pub(crate) fn split_months(&self) -> impl Iterator<Item = &[Day]> {
+        self.chunk_by(|a, b| a.full_date().month() == b.full_date().month())
+    }
+}
+
+enum Shift {
+    Night,
+    Day,
+}
+
+pub(crate) struct DaysBuilder {
+    holidays: HashSet<NaiveDate>,
+    first_january_shift: Option<Shift>,
+}
+
+impl DaysBuilder {
+    pub(crate) fn new() -> Self {
+        Self {
+            holidays: HashSet::new(),
+            first_january_shift: None,
+        }
+    }
+
+    pub(crate) fn with_holidays(mut self, holidays: &HashSet<NaiveDate>) -> Self {
+        self.holidays = holidays.to_owned();
+        self
+    }
+
+    pub(crate) fn with_shift_type(mut self, work_shift: &WorkShift) -> Self {
+        let (date, current_shift) = match work_shift {
+            WorkShift::IsNight(date) => (date, Shift::Night),
+            WorkShift::IsDay(date) => (date, Shift::Day),
+        };
+
+        let first_january = NaiveDate::from_ymd_opt(date.year(), 1, 1).unwrap();
+        let current_week = date.week(first_january.weekday());
+        let shifts_gone = current_week.first_day().ordinal() / 7;
+
+        let first_jan_shift = match (shifts_gone % 2, current_shift) {
+            (0, shift) => shift,
+            (_, Shift::Night) => Shift::Day,
+            (_, Shift::Day) => Shift::Night,
+        };
+
+        self.first_january_shift = Some(first_jan_shift);
+        self
+    }
+
+    pub(crate) fn build(self) -> Days {
+        let current_year = match self.holidays.iter().next().cloned() {
             Some(v) => v.year(),
             None => Local::now().date_naive().year(),
         };
+
         let first_date = NaiveDate::from_ymd_opt(current_year as i32, 1, 1).unwrap();
+        let first_jan_weekday = first_date.weekday();
+
         let days: Days = first_date
             .iter_days()
             .take_while(|d| d.year() == current_year as i32)
             .map(|d| {
-                if d.weekday() == Weekday::Sun {
-                    Day::new(d, DayType::Weekend)
-                } else if d.weekday() == Weekday::Sat || holidays.contains(&d) {
-                    Day::new(d, DayType::Earn)
-                } else {
-                    Day::new(d, DayType::Usual)
-                }
+                let is_night = match &self.first_january_shift {
+                    Some(first_jan_shift) => {
+                        let current_week = d.week(first_jan_weekday);
+                        let shifts_gone = current_week.first_day().ordinal0() / 7;
+
+                        match (shifts_gone % 2, first_jan_shift) {
+                            (0, Shift::Night) => true,
+                            (0, Shift::Day) => false,
+                            (_, Shift::Night) => false,
+                            (_, Shift::Day) => true,
+                        }
+                    }
+                    None => false,
+                };
+
+                let is_holiday = self.holidays.contains(&d);
+
+                let day_type = match (d.weekday(), is_night, is_holiday) {
+                    // Sunday
+                    (Weekday::Sun, _, _) => DayType::Weekend,
+
+                    // Saturday
+                    (Weekday::Sat, true, _) => DayType::Weekend, // Night
+                    (Weekday::Sat, false, _) => DayType::Earn,   // Day
+
+                    // Holidays
+                    (_, true, true) => DayType::NightEarn,
+                    (_, false, true) => DayType::Earn,
+
+                    // Usual days
+                    (_, true, false) => DayType::Night,
+                    (_, false, false) => DayType::Usual,
+                };
+
+                Day::new(d, day_type)
             })
             .collect();
-        days
-    }
 
-    pub(crate) fn split_months(&self) -> impl Iterator<Item = &[Day]> {
-        self.chunk_by(|a, b| a.day.month() == b.day.month())
+        days
     }
 }
