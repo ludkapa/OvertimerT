@@ -137,15 +137,36 @@ mod tests {
     fn test_first_jan_shift() {
         // Given
         let holidays_mock: HashSet<NaiveDate> = HashSet::new();
-        let test_date = NaiveDate::from_ymd_opt(2026, 2, 25).unwrap();
-        // when
-        let days = DaysBuilder::new()
-            .with_holidays(&holidays_mock)
-            .with_shift_type(&WorkShift::IsDay(test_date))
-            .build();
-        let current_earn_type = days.first().unwrap().earn_type();
-        let target_earn_type = DayType::Usual;
-        // Then
-        assert_eq!(current_earn_type, target_earn_type);
+        let start_date = NaiveDate::from_ymd_opt(2026, 1, 1).unwrap();
+        let jan1_weekday = start_date.weekday().num_days_from_monday();
+
+        start_date
+            .iter_days()
+            .filter(|d| d.year() == 2026)
+            .for_each(|d| {
+                let day_of_year = d.ordinal0();
+                let weeks_passed = (day_of_year + jan1_weekday) / 7;
+
+                let current_shift = match weeks_passed % 2 {
+                    0 => WorkShift::IsDay(d),
+                    _ => WorkShift::IsNight(d),
+                };
+
+                // when
+                let days = DaysBuilder::new()
+                    .with_holidays(&holidays_mock)
+                    .with_shift_type(&current_shift)
+                    .build();
+
+                let current_earn_type = days.first().unwrap().earn_type();
+                let target_earn_type = DayType::Usual;
+
+                // Then
+                assert_eq!(
+                    current_earn_type, target_earn_type,
+                    "Ошибка на дате: {} (прошло недель: {})",
+                    d, weeks_passed
+                );
+            });
     }
 }
