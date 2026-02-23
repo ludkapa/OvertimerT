@@ -12,7 +12,7 @@ use crate::{
 use anyhow::Result as AResult;
 use rust_xlsxwriter::{workbook::Workbook, worksheet::Worksheet};
 
-pub async fn get_filled_table(salary: u32) -> AResult<Vec<u8>> {
+pub async fn get_filled_table(gen_params: GenerateParams) -> AResult<Vec<u8>> {
     // Fetch holidays
     let holidays = HolidayDates::init().await?;
     // Generate days for filling
