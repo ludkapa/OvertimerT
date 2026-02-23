@@ -9,7 +9,7 @@ use teloxide::{
     update_listeners::webhooks,
 };
 
-use crate::handlers::{night_shift_toggle, salary, start};
+use crate::handlers::{day_shift_setup, night_shift_toggle, salary, start};
 
 type UserDialogue = Dialogue<DState, InMemStorage<DState>>;
 
@@ -65,9 +65,13 @@ async fn run_bot(token: String, port: String, webhook_url: String) {
                 .branch(dptree::case![DState::Start].endpoint(start))
                 .branch(dptree::case![DState::Salary].endpoint(salary)),
         )
-        .branch(Update::filter_callback_query().branch(
-            dptree::case![DState::NightShiftToggle { salary }].endpoint(night_shift_toggle),
-        ));
+        .branch(
+            Update::filter_callback_query()
+                .branch(
+                    dptree::case![DState::NightShiftToggle { salary }].endpoint(night_shift_toggle),
+                )
+                .branch(dptree::case![DState::NightShiftType { salary }].endpoint(day_shift_setup)),
+        );
 
     // Dispatcher
     Dispatcher::builder(bot, router)
