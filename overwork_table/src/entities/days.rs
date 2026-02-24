@@ -60,24 +60,17 @@ impl DaysBuilder {
             WorkShift::IsNight(date) => (date, Shift::Night),
             WorkShift::IsDay(date) => (date, Shift::Day),
         };
-
-        // 1. Берем 1 января текущего года
         let first_date = NaiveDate::from_ymd_opt(date.year(), 1, 1).unwrap();
 
-        // 2. Узнаем день недели 1 января (Понедельник = 0, Воскресенье = 6)
         let jan1_weekday = first_date.weekday().num_days_from_monday();
 
-        // 3. Берем порядковый день в году для переданной даты (начиная с 0)
         let day_of_year = date.ordinal0();
 
-        // 4. Считаем, сколько полных недель прошло.
-        // Прибавляя jan1_weekday, мы выравниваем деление точно по границам понедельников.
         let weeks_passed = (day_of_year + jan1_weekday) / 7;
 
-        // 5. Определяем смену 1 января
         let first_jan_shift = match weeks_passed % 2 {
-            0 => current_shift,        // Четное количество недель = смена совпадает
-            _ => current_shift.next(), // Нечетное = смена поменялась
+            0 => current_shift,
+            _ => current_shift.next(),
         };
 
         self.first_january_shift = Some(first_jan_shift);
