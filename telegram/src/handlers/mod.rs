@@ -105,14 +105,14 @@ pub(crate) async fn day_shift_setup(
         match button_data.as_str() {
             "yes" => {
                 let current_time = Local::now().date_naive();
-                let params = GenerateParams::new(salary).with_shift(WorkShift::IsDay(current_time));
+                let params =
+                    GenerateParams::new(salary).with_shift(WorkShift::IsNight(current_time));
                 send_table(bot, dialogue.chat_id(), params).await?;
                 dialogue.update(DState::Start).await?;
             }
             "no" => {
                 let current_time = Local::now().date_naive();
-                let params =
-                    GenerateParams::new(salary).with_shift(WorkShift::IsNight(current_time));
+                let params = GenerateParams::new(salary).with_shift(WorkShift::IsDay(current_time));
                 send_table(bot, dialogue.chat_id(), params).await?;
                 dialogue.update(DState::Start).await?;
             }
