@@ -83,7 +83,7 @@ pub(crate) async fn night_shift_toggle(
             "no" => {
                 let params = GenerateParams::new(salary);
                 send_table(bot, dialogue.chat_id(), params).await?;
-                dialogue.update(DState::Start).await?;
+                dialogue.update(DState::Salary).await?;
             }
             _ => {
                 bot.send_message(dialogue.chat_id(), "Неизвестная команда")
@@ -108,13 +108,13 @@ pub(crate) async fn day_shift_setup(
                 let params =
                     GenerateParams::new(salary).with_shift(WorkShift::IsNight(current_time));
                 send_table(bot, dialogue.chat_id(), params).await?;
-                dialogue.update(DState::Start).await?;
+                dialogue.update(DState::Salary).await?;
             }
             "no" => {
                 let current_time = Local::now().date_naive();
                 let params = GenerateParams::new(salary).with_shift(WorkShift::IsDay(current_time));
                 send_table(bot, dialogue.chat_id(), params).await?;
-                dialogue.update(DState::Start).await?;
+                dialogue.update(DState::Salary).await?;
             }
             _ => {
                 bot.send_message(dialogue.chat_id(), "Неизвестная команда")
