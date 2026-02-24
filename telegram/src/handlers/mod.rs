@@ -75,7 +75,7 @@ pub(crate) async fn night_shift_toggle(
         match button_data.as_str() {
             "yes" => {
                 let keyboard = make_confirm_keyboard();
-                bot.send_message(dialogue.chat_id(), "На этой неделе дневная смена?")
+                bot.send_message(dialogue.chat_id(), "На этой неделе ночная смена?")
                     .reply_markup(keyboard)
                     .await?;
                 dialogue.update(DState::NightShiftType { salary }).await?;
