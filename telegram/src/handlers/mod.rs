@@ -133,6 +133,11 @@ async fn send_table(bot: Bot, chat_id: ChatId, params: GenerateParams) -> AResul
         InputFile::memory(table).file_name(format!("tabel_{}.xlsx", Local::now().year())),
     )
     .await?;
+    bot.send_message(
+        chat_id,
+        "Отправте оклад что бы сгенерировать таблицу снова!",
+    )
+    .await?;
     Ok(())
 }
 
