@@ -153,7 +153,7 @@ pub(crate) async fn day_shift_setup(
     Ok(())
 }
 
-async fn send_table(bot: Bot, chat_id: ChatId, params: GenerateParams) -> AResult<()> {
+async fn send_table(bot: &Bot, chat_id: ChatId, params: GenerateParams) -> AResult<()> {
     let table = get_filled_table(params).await?;
     bot.send_message(chat_id, "Ваш табель готов!").await?;
     bot.send_document(
