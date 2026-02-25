@@ -148,6 +148,7 @@ pub(crate) async fn day_shift_setup(
 ) -> AResult<()> {
     bot.answer_callback_query(query.id).await?;
     if let Some(button_data) = query.data {
+        bot.delete_message(dialogue.chat_id(), last_bot_msg).await?;
         match button_data.as_str() {
             "yes" => {
                 let current_time = Local::now().date_naive();
