@@ -46,6 +46,7 @@ pub(crate) async fn salary(
     msg: Message,
 ) -> AResult<()> {
     let err_msg = "Некоректно указан оклад! Пример: 30456!";
+    bot.delete_message(msg.chat.id, last_bot_msg).await?;
 
     let raw_salary = match msg.text() {
         Some(text) => text,
