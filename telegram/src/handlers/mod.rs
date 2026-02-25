@@ -8,7 +8,7 @@ use overwork_table::{
 use teloxide::{
     Bot,
     prelude::*,
-    types::{InlineKeyboardButton, InlineKeyboardMarkup, InputFile, Message},
+    types::{InlineKeyboardButton, InlineKeyboardMarkup, InputFile, Message, MessageId},
 };
 
 pub(crate) async fn start(bot: Bot, dialogue: UserDialogue, msg: Message) -> AResult<()> {
@@ -28,9 +28,14 @@ pub(crate) async fn start(bot: Bot, dialogue: UserDialogue, msg: Message) -> ARe
         ),
     )
     .await?;
-    bot.send_message(msg.chat.id, format!("Пришлите ваш оклад в формате: 30456."))
+    let msg = bot
+        .send_message(msg.chat.id, format!("Пришлите ваш оклад в формате: 30456."))
         .await?;
-    dialogue.update(DState::Salary).await?;
+    dialogue
+        .update(DState::Salary {
+            last_bot_msg: msg.id,
+        })
+        .await?;
     Ok(())
 }
 
