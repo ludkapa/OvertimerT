@@ -54,6 +54,8 @@ pub(crate) async fn salary(bot: Bot, dialogue: UserDialogue, msg: Message) -> AR
 
     match salary {
         Some(s) => {
+            bot.delete_message(msg.chat.id, last_bot_msg).await?;
+            bot.delete_message(msg.chat.id, msg.id).await?;
             let keyboard = make_confirm_keyboard();
             bot.send_message(msg.chat.id, "Работаете ли вы в ночные смены?")
                 .reply_markup(keyboard)
