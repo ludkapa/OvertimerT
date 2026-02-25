@@ -115,6 +115,7 @@ pub(crate) async fn night_shift_toggle(
                     .await?;
             }
             "no" => {
+                bot.delete_message(dialogue.chat_id(), last_bot_msg).await?;
                 let params = GenerateParams::new(salary);
                 send_table(bot, dialogue.chat_id(), params).await?;
                 dialogue.update(DState::Salary).await?;
