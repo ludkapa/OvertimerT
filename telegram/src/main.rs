@@ -5,7 +5,7 @@ use teloxide::{
     dispatching::{HandlerExt, UpdateFilterExt, dialogue::InMemStorage},
     dptree,
     prelude::{Dialogue, Dispatcher, LoggingErrorHandler},
-    types::Update,
+    types::{MessageId, Update},
     update_listeners::webhooks,
 };
 
@@ -18,11 +18,15 @@ type UserDialogue = Dialogue<DState, InMemStorage<DState>>;
 enum DState {
     #[default]
     Start,
-    Salary,
+    Salary {
+        last_bot_msg: MessageId,
+    },
     NightShiftToggle {
+        last_bot_msg: MessageId,
         salary: u32,
     },
     NightShiftType {
+        last_bot_msg: MessageId,
         salary: u32,
     },
 }
@@ -63,14 +67,24 @@ async fn run_bot(token: String, port: String, webhook_url: String) {
         .branch(
             Update::filter_message()
                 .branch(dptree::case![DState::Start].endpoint(start))
-                .branch(dptree::case![DState::Salary].endpoint(salary)),
+                .branch(dptree::case![DState::Salary { last_bot_msg }].endpoint(salary)),
         )
         .branch(
             Update::filter_callback_query()
                 .branch(
-                    dptree::case![DState::NightShiftToggle { salary }].endpoint(night_shift_toggle),
+                    dptree::case![DState::NightShiftToggle {
+                        last_bot_msg,
+                        salary
+                    }]
+                    .endpoint(night_shift_toggle),
                 )
-                .branch(dptree::case![DState::NightShiftType { salary }].endpoint(day_shift_setup)),
+                .branch(
+                    dptree::case![DState::NightShiftType {
+                        last_bot_msg,
+                        salary
+                    }]
+                    .endpoint(day_shift_setup),
+                ),
         );
 
     // Dispatcher
