@@ -68,11 +68,15 @@ pub(crate) async fn salary(
             bot.delete_message(msg.chat.id, last_bot_msg).await?;
             bot.delete_message(msg.chat.id, msg.id).await?;
             let keyboard = make_confirm_keyboard();
-            bot.send_message(msg.chat.id, "Работаете ли вы в ночные смены?")
+            let bot_msg = bot
+                .send_message(msg.chat.id, "Работаете ли вы в ночные смены?")
                 .reply_markup(keyboard)
                 .await?;
             dialogue
-                .update(DState::NightShiftToggle { salary: s })
+                .update(DState::NightShiftToggle {
+                    last_bot_msg: bot_msg.id,
+                    salary: s,
+                })
                 .await?;
         }
         None => {
