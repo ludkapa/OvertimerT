@@ -8,7 +8,7 @@ use overwork_table::{
 use teloxide::{
     Bot,
     prelude::*,
-    types::{InlineKeyboardButton, InlineKeyboardMarkup, InputFile, Message},
+    types::{InlineKeyboardButton, InlineKeyboardMarkup, InputFile, Message, MessageId},
 };
 
 pub(crate) async fn start(bot: Bot, dialogue: UserDialogue, msg: Message) -> AResult<()> {
@@ -28,19 +28,35 @@ pub(crate) async fn start(bot: Bot, dialogue: UserDialogue, msg: Message) -> ARe
         ),
     )
     .await?;
-    bot.send_message(msg.chat.id, format!("Пришлите ваш оклад в формате: 30456."))
+    let bot_msg = bot
+        .send_message(msg.chat.id, format!("Пришлите ваш оклад в формате: 30456."))
         .await?;
-    dialogue.update(DState::Salary).await?;
+    dialogue
+        .update(DState::Salary {
+            last_bot_msg: bot_msg.id,
+        })
+        .await?;
     Ok(())
 }
 
-pub(crate) async fn salary(bot: Bot, dialogue: UserDialogue, msg: Message) -> AResult<()> {
+pub(crate) async fn salary(
+    bot: Bot,
+    last_bot_msg: MessageId,
+    dialogue: UserDialogue,
+    msg: Message,
+) -> AResult<()> {
     let err_msg = "Некоректно указан оклад! Пример: 30456!";
+    bot.delete_message(msg.chat.id, last_bot_msg).await?;
 
     let raw_salary = match msg.text() {
         Some(text) => text,
         None => {
-            bot.send_message(msg.chat.id, err_msg).await?;
+            let bot_msg = bot.send_message(msg.chat.id, err_msg).await?;
+            dialogue
+                .update(DState::Salary {
+                    last_bot_msg: bot_msg.id,
+                })
+                .await?;
             return Ok(());
         }
     };
@@ -49,16 +65,26 @@ pub(crate) async fn salary(bot: Bot, dialogue: UserDialogue, msg: Message) -> AR
 
     match salary {
         Some(s) => {
+            bot.delete_message(msg.chat.id, msg.id).await?;
             let keyboard = make_confirm_keyboard();
-            bot.send_message(msg.chat.id, "Работаете ли вы в ночные смены?")
+            let bot_msg = bot
+                .send_message(msg.chat.id, "Работаете ли вы в ночные смены?")
                 .reply_markup(keyboard)
                 .await?;
             dialogue
-                .update(DState::NightShiftToggle { salary: s })
+                .update(DState::NightShiftToggle {
+                    last_bot_msg: bot_msg.id,
+                    salary: s,
+                })
                 .await?;
         }
         None => {
-            bot.send_message(msg.chat.id, err_msg).await?;
+            let bot_msg = bot.send_message(msg.chat.id, err_msg).await?;
+            dialogue
+                .update(DState::Salary {
+                    last_bot_msg: bot_msg.id,
+                })
+                .await?;
         }
     }
     Ok(())
@@ -66,24 +92,41 @@ pub(crate) async fn salary(bot: Bot, dialogue: UserDialogue, msg: Message) -> AR
 
 pub(crate) async fn night_shift_toggle(
     bot: Bot,
-    salary: u32,
+    (last_bot_msg, salary): (MessageId, u32),
     dialogue: UserDialogue,
     query: CallbackQuery,
 ) -> AResult<()> {
     bot.answer_callback_query(query.id).await?;
     if let Some(button_data) = query.data {
+        bot.delete_message(dialogue.chat_id(), last_bot_msg).await?;
         match button_data.as_str() {
             "yes" => {
                 let keyboard = make_confirm_keyboard();
-                bot.send_message(dialogue.chat_id(), "На этой неделе ночная смена?")
+                let bot_msg = bot
+                    .send_message(dialogue.chat_id(), "На этой неделе ночная смена?")
                     .reply_markup(keyboard)
                     .await?;
-                dialogue.update(DState::NightShiftType { salary }).await?;
+                dialogue
+                    .update(DState::NightShiftType {
+                        last_bot_msg: bot_msg.id,
+                        salary,
+                    })
+                    .await?;
             }
             "no" => {
                 let params = GenerateParams::new(salary);
-                send_table(bot, dialogue.chat_id(), params).await?;
-                dialogue.update(DState::Salary).await?;
+                send_table(&bot, dialogue.chat_id(), params).await?;
+                let bot_msg = bot
+                    .send_message(
+                        dialogue.chat_id(),
+                        "Отправте оклад что бы сгенерировать таблицу снова!",
+                    )
+                    .await?;
+                dialogue
+                    .update(DState::Salary {
+                        last_bot_msg: bot_msg.id,
+                    })
+                    .await?;
             }
             _ => {
                 bot.send_message(dialogue.chat_id(), "Неизвестная команда")
@@ -96,25 +139,46 @@ pub(crate) async fn night_shift_toggle(
 
 pub(crate) async fn day_shift_setup(
     bot: Bot,
-    salary: u32,
+    (last_bot_msg, salary): (MessageId, u32),
     dialogue: UserDialogue,
     query: CallbackQuery,
 ) -> AResult<()> {
     bot.answer_callback_query(query.id).await?;
     if let Some(button_data) = query.data {
+        bot.delete_message(dialogue.chat_id(), last_bot_msg).await?;
         match button_data.as_str() {
             "yes" => {
                 let current_time = Local::now().date_naive();
                 let params =
                     GenerateParams::new(salary).with_shift(WorkShift::IsNight(current_time));
-                send_table(bot, dialogue.chat_id(), params).await?;
-                dialogue.update(DState::Salary).await?;
+                send_table(&bot, dialogue.chat_id(), params).await?;
+                let bot_msg = bot
+                    .send_message(
+                        dialogue.chat_id(),
+                        "Отправте оклад что бы сгенерировать таблицу снова!",
+                    )
+                    .await?;
+                dialogue
+                    .update(DState::Salary {
+                        last_bot_msg: bot_msg.id,
+                    })
+                    .await?;
             }
             "no" => {
                 let current_time = Local::now().date_naive();
                 let params = GenerateParams::new(salary).with_shift(WorkShift::IsDay(current_time));
-                send_table(bot, dialogue.chat_id(), params).await?;
-                dialogue.update(DState::Salary).await?;
+                send_table(&bot, dialogue.chat_id(), params).await?;
+                let bot_msg = bot
+                    .send_message(
+                        dialogue.chat_id(),
+                        "Отправте оклад что бы сгенерировать таблицу снова!",
+                    )
+                    .await?;
+                dialogue
+                    .update(DState::Salary {
+                        last_bot_msg: bot_msg.id,
+                    })
+                    .await?;
             }
             _ => {
                 bot.send_message(dialogue.chat_id(), "Неизвестная команда")
@@ -125,17 +189,12 @@ pub(crate) async fn day_shift_setup(
     Ok(())
 }
 
-async fn send_table(bot: Bot, chat_id: ChatId, params: GenerateParams) -> AResult<()> {
+async fn send_table(bot: &Bot, chat_id: ChatId, params: GenerateParams) -> AResult<()> {
     let table = get_filled_table(params).await?;
     bot.send_message(chat_id, "Ваш табель готов!").await?;
     bot.send_document(
         chat_id,
         InputFile::memory(table).file_name(format!("tabel_{}.xlsx", Local::now().year())),
-    )
-    .await?;
-    bot.send_message(
-        chat_id,
-        "Отправте оклад что бы сгенерировать таблицу снова!",
     )
     .await?;
     Ok(())
