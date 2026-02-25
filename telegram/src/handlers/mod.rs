@@ -93,8 +93,7 @@ pub(crate) async fn salary(
 
 pub(crate) async fn night_shift_toggle(
     bot: Bot,
-    last_bot_msg: MessageId,
-    salary: u32,
+    (last_bot_msg, salary): (MessageId, u32),
     dialogue: UserDialogue,
     query: CallbackQuery,
 ) -> AResult<()> {
@@ -141,8 +140,7 @@ pub(crate) async fn night_shift_toggle(
 
 pub(crate) async fn day_shift_setup(
     bot: Bot,
-    last_bot_msg: MessageId,
-    salary: u32,
+    (last_bot_msg, salary): (MessageId, u32),
     dialogue: UserDialogue,
     query: CallbackQuery,
 ) -> AResult<()> {
