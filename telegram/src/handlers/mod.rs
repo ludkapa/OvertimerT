@@ -65,7 +65,6 @@ pub(crate) async fn salary(
 
     match salary {
         Some(s) => {
-            bot.delete_message(msg.chat.id, last_bot_msg).await?;
             bot.delete_message(msg.chat.id, msg.id).await?;
             let keyboard = make_confirm_keyboard();
             let bot_msg = bot
