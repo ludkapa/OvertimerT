@@ -117,8 +117,18 @@ pub(crate) async fn night_shift_toggle(
             "no" => {
                 bot.delete_message(dialogue.chat_id(), last_bot_msg).await?;
                 let params = GenerateParams::new(salary);
-                send_table(bot, dialogue.chat_id(), params).await?;
-                dialogue.update(DState::Salary).await?;
+                send_table(&bot, dialogue.chat_id(), params).await?;
+                let bot_msg = bot
+                    .send_message(
+                        dialogue.chat_id(),
+                        "Отправте оклад что бы сгенерировать таблицу снова!",
+                    )
+                    .await?;
+                dialogue
+                    .update(DState::Salary {
+                        last_bot_msg: bot_msg.id,
+                    })
+                    .await?;
             }
             _ => {
                 bot.send_message(dialogue.chat_id(), "Неизвестная команда")
@@ -166,11 +176,6 @@ async fn send_table(bot: &Bot, chat_id: ChatId, params: GenerateParams) -> AResu
     bot.send_document(
         chat_id,
         InputFile::memory(table).file_name(format!("tabel_{}.xlsx", Local::now().year())),
-    )
-    .await?;
-    bot.send_message(
-        chat_id,
-        "Отправте оклад что бы сгенерировать таблицу снова!",
     )
     .await?;
     Ok(())
