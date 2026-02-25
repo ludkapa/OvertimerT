@@ -154,14 +154,34 @@ pub(crate) async fn day_shift_setup(
                 let current_time = Local::now().date_naive();
                 let params =
                     GenerateParams::new(salary).with_shift(WorkShift::IsNight(current_time));
-                send_table(bot, dialogue.chat_id(), params).await?;
-                dialogue.update(DState::Salary).await?;
+                send_table(&bot, dialogue.chat_id(), params).await?;
+                let bot_msg = bot
+                    .send_message(
+                        dialogue.chat_id(),
+                        "Отправте оклад что бы сгенерировать таблицу снова!",
+                    )
+                    .await?;
+                dialogue
+                    .update(DState::Salary {
+                        last_bot_msg: bot_msg.id,
+                    })
+                    .await?;
             }
             "no" => {
                 let current_time = Local::now().date_naive();
                 let params = GenerateParams::new(salary).with_shift(WorkShift::IsDay(current_time));
-                send_table(bot, dialogue.chat_id(), params).await?;
-                dialogue.update(DState::Salary).await?;
+                send_table(&bot, dialogue.chat_id(), params).await?;
+                let bot_msg = bot
+                    .send_message(
+                        dialogue.chat_id(),
+                        "Отправте оклад что бы сгенерировать таблицу снова!",
+                    )
+                    .await?;
+                dialogue
+                    .update(DState::Salary {
+                        last_bot_msg: bot_msg.id,
+                    })
+                    .await?;
             }
             _ => {
                 bot.send_message(dialogue.chat_id(), "Неизвестная команда")
