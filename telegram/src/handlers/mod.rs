@@ -141,6 +141,7 @@ pub(crate) async fn night_shift_toggle(
 
 pub(crate) async fn day_shift_setup(
     bot: Bot,
+    last_bot_msg: MessageId,
     salary: u32,
     dialogue: UserDialogue,
     query: CallbackQuery,
