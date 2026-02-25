@@ -100,6 +100,7 @@ pub(crate) async fn night_shift_toggle(
 ) -> AResult<()> {
     bot.answer_callback_query(query.id).await?;
     if let Some(button_data) = query.data {
+        bot.delete_message(dialogue.chat_id(), last_bot_msg).await?;
         match button_data.as_str() {
             "yes" => {
                 let keyboard = make_confirm_keyboard();
@@ -115,7 +116,6 @@ pub(crate) async fn night_shift_toggle(
                     .await?;
             }
             "no" => {
-                bot.delete_message(dialogue.chat_id(), last_bot_msg).await?;
                 let params = GenerateParams::new(salary);
                 send_table(&bot, dialogue.chat_id(), params).await?;
                 let bot_msg = bot
