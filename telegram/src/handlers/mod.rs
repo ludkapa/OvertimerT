@@ -51,7 +51,12 @@ pub(crate) async fn salary(
     let raw_salary = match msg.text() {
         Some(text) => text,
         None => {
-            bot.send_message(msg.chat.id, err_msg).await?;
+            let bot_msg = bot.send_message(msg.chat.id, err_msg).await?;
+            dialogue
+                .update(DState::Salary {
+                    last_bot_msg: bot_msg.id,
+                })
+                .await?;
             return Ok(());
         }
     };
@@ -71,7 +76,12 @@ pub(crate) async fn salary(
                 .await?;
         }
         None => {
-            bot.send_message(msg.chat.id, err_msg).await?;
+            let bot_msg = bot.send_message(msg.chat.id, err_msg).await?;
+            dialogue
+                .update(DState::Salary {
+                    last_bot_msg: bot_msg.id,
+                })
+                .await?;
         }
     }
     Ok(())
