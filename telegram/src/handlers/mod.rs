@@ -39,7 +39,12 @@ pub(crate) async fn start(bot: Bot, dialogue: UserDialogue, msg: Message) -> ARe
     Ok(())
 }
 
-pub(crate) async fn salary(bot: Bot, dialogue: UserDialogue, msg: Message) -> AResult<()> {
+pub(crate) async fn salary(
+    bot: Bot,
+    last_bot_msg: MessageId,
+    dialogue: UserDialogue,
+    msg: Message,
+) -> AResult<()> {
     let err_msg = "Некоректно указан оклад! Пример: 30456!";
 
     let raw_salary = match msg.text() {
@@ -73,6 +78,7 @@ pub(crate) async fn salary(bot: Bot, dialogue: UserDialogue, msg: Message) -> AR
 
 pub(crate) async fn night_shift_toggle(
     bot: Bot,
+    last_bot_msg: MessageId,
     salary: u32,
     dialogue: UserDialogue,
     query: CallbackQuery,
